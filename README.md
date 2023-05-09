@@ -24,7 +24,7 @@ import (
 func main() {
 	// Create a cache with a default expiration time of 5 minutes, and which
 	// purges expired items every 10 minutes
-	// This project offer three different maps to store key:value; (See BenchMark)
+	// This project offer three different maps and one LRU Cache to store key:value; (See BenchMark)
 	c := cache.New(5*time.Minute, 10*time.Minute, NewRwmMap())
 	c := cache.New(5*time.Minute, 10*time.Minute, NewSyncMap())
 	c := cache.New(5*time.Minute, 10*time.Minute, NewConcurrentMap())
