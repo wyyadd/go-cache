@@ -2,6 +2,7 @@ package cache
 
 import (
 	"container/list"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -9,6 +10,7 @@ import (
 type LRUCache struct {
 	mu       sync.RWMutex
 	maxItems int
+	stopChan chan struct{}
 
 	expireTime time.Duration
 	cleanTime  time.Duration
@@ -34,8 +36,10 @@ func NewLRUCache(maxItems int, expireTime time.Duration, cleanTime time.Duration
 		maxItems:   maxItems,
 		expireTime: expireTime,
 		cleanTime:  cleanTime,
+		stopChan:   make(chan struct{}),
 	}
 	go c.startGC()
+	runtime.SetFinalizer(c, func() { c.stopChan <- struct{}{} })
 	return c
 }
 
@@ -89,6 +93,9 @@ func (c *LRUCache) startGC() {
 	ticker := time.NewTicker(c.cleanTime)
 	for {
 		select {
+		case <-c.stopChan:
+			ticker.Stop()
+			return
 		case <-ticker.C:
 			c.mu.Lock()
 			for key, ele := range c.cache {
